@@ -1,0 +1,57 @@
+# Sistema Bancario - Compartamos Banco
+> **Arquitectura Backend:** Spring Boot 3.2 + Java 17 + JPA
+
+---
+
+##  Diseño del Modelo de Datos
+
+El núcleo del sistema está diseñado bajo estándares financieros de **alta precisión**, asegurando que cada movimiento sea rastreable y matemáticamente exacto.
+
+
+
+### 1. Entidad: Cuenta (`accounts`)
+Gestiona la identidad financiera y el balance en tiempo real del usuario.
+
+| Atributo | Tipo de Dato | Restricciones | Descripción |
+| :--- | :--- | :--- | :--- |
+| `id` | **Long** | `PK`, `Identity` | Identificador único del sistema. |
+| `accountNumber` | **String** | `Unique`, `Not Null` | Número de cuenta (Formato: 191-XXX). |
+| `balance` | **BigDecimal** | `Not Null` | Saldo disponible para operaciones. |
+
+> [!TIP]
+> **Lógica Automática:** Se utiliza el hook `@PrePersist` para inicializar el saldo en `0.00` si se intenta crear una cuenta con valor nulo, evitando inconsistencias en la base de datos.
+
+---
+
+### 2. Entidad: Transacción (`transactions`)
+Registra el historial inmutable de movimientos financieros.
+
+| Atributo | Tipo de Dato | Restricciones | Descripción |
+| :--- | :--- | :--- | :--- |
+| `id` | **Long** | `PK`, `Identity` | Folio único de la operación. |
+| `type` | **Enum** | `DEPOSIT / WITHDRAWAL` | Define si el dinero entra o sale. |
+| `amount` | **BigDecimal** | `Not Null` | Monto exacto de la transacción. |
+| `createdAt` | **LocalDateTime** | `System Generated` | Estampa de tiempo exacta del registro. |
+| `accountId` | **Long** | `FK (Logical)` | Vínculo con la cuenta del cliente. |
+
+
+
+---
+
+## Características Técnicas de Implementación
+
+* ** Precisión Absoluta:** Implementación de `BigDecimal` para prevenir errores de redondeo de punto flotante, críticos en transacciones bancarias.
+* ** Auditoría Nativa:** Generación automática de `createdAt` mediante hooks de JPA, asegurando que el historial sea inalterable por el cliente.
+* ** Arquitectura Desacoplada:** El uso de `accountId` facilita la escalabilidad hacia una arquitectura de microservicios.
+
+---
+
+## Cómo Visualizar los Datos (JSON)
+Cuando el Backend responde a la App de Android, el formato es el siguiente:
+
+```json
+{
+  "accountNumber": "001-456-789",
+  "balance": 1500.50,
+  "lastMovement": "2026-01-12T18:50:00"
+}
